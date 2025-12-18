@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1947463898",
+    "project_id": "recipe-bf38e",
+    "storage_bucket": "recipe-bf38e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1947463898:android:5a064808f5c42ba333f5e3",
+        "android_client_info": {
+          "package_name": "com.example.recipecookinglog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAB-b5kH0izFMh5h99g1QeSLHdp1ir0ths"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
