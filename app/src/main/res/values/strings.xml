@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Recipe Cooking Log</string>
+
+    <!-- Authentication -->
+    <string name="welcome_back">Welcome Back!</string>
+    <string name="login_subtitle">Sign in to continue</string>
+    <string name="create_account">Create Account</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="full_name">Full Name</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="dont_have_account">Don\'t have an account? Register</string>
+    <string name="already_have_account">Already have an account? Login</string>
+    <string name="logout">Logout</string>
+
+    <!-- Recipe -->
+    <string name="my_recipes">My Recipes</string>
+    <string name="add_recipe">Add Recipe</string>
+    <string name="edit_recipe">Edit Recipe</string>
+    <string name="recipe_name">Recipe Name</string>
+    <string name="cuisine">Cuisine</string>
+    <string name="meal_type">Meal Type</string>
+    <string name="ingredients">Ingredients</string>
+    <string name="ingredients_hint">Enter ingredients (one per line)</string>
+    <string name="steps">Steps</string>
+    <string name="steps_hint">Enter cooking steps</string>
+    <string name="rating">Rating</string>
+    <string name="select_image">Select Image</string>
+    <string name="save_recipe">Save Recipe</string>
+    <string name="recipe_image">Recipe Image</string>
+    <string name="app_logo">App Logo</string>
+
+    <!-- Filter -->
+    <string name="filter">Filter</string>
+    <string name="filter_recipes">Filter Recipes</string>
+    <string name="apply">Apply</string>
+    <string name="reset">Reset</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Actions -->
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+
+    <!-- Empty State -->
+    <string name="no_recipes">No Recipes</string>
+    <string name="no_recipes_yet">No recipes yet</string>
+    <string name="tap_to_add_recipe">Tap + to add your first recipe</string>
+</resources>
