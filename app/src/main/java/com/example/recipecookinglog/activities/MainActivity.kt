@@ -1,6 +1,5 @@
 package com.example.recipecookinglog.activities
 
-
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
@@ -8,16 +7,19 @@ import android.view.MenuItem
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
+import androidx.navigation.NavController
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.example.recipecookinglog.R
 import com.example.recipecookinglog.databinding.ActivityMainBinding
+import com.example.recipecookinglog.fragments.FilterFragment
 import com.example.recipecookinglog.viewmodels.UserViewModel
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val userViewModel: UserViewModel by viewModels()
+    private lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,7 +28,11 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-        val navController = findNavController(R.id.nav_host_fragment)
+        // Properly get NavController from NavHostFragment
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        navController = navHostFragment.navController
+
         setupActionBarWithNavController(navController)
 
         binding.fab.setOnClickListener {
@@ -42,7 +48,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_filter -> {
-                // Open filter dialog/fragment
+                FilterFragment().show(supportFragmentManager, "FilterFragment")
                 true
             }
             R.id.action_logout -> {
@@ -67,7 +73,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment)
         return navController.navigateUp() || super.onSupportNavigateUp()
     }
 }
