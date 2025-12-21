@@ -84,6 +84,14 @@
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 
+    <!-- Collapsed AppBar Title Style - MISSING STYLE ADDED -->
+    <style name="CollapsedAppBarTitle" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
     <!-- App Bar Overlay -->
     <style name="AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
