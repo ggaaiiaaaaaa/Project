@@ -5,12 +5,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/background"
     tools:context=".activities.RecipeDetailActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/app_bar"
         android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_height="320dp"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         android:fitsSystemWindows="true">
 
@@ -19,8 +20,9 @@
             android:layout_height="match_parent"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             app:contentScrim="@color/primary"
-            app:expandedTitleMarginStart="16dp"
-            app:expandedTitleMarginEnd="64dp">
+            app:expandedTitleMarginStart="20dp"
+            app:expandedTitleMarginEnd="64dp"
+            app:expandedTitleTextAppearance="@style/CollapsedAppBarTitle">
 
             <ImageView
                 android:id="@+id/iv_recipe_image"
@@ -54,115 +56,224 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="20dp">
 
-            <!-- Recipe Name -->
-            <TextView
-                android:id="@+id/tv_recipe_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:textColor="@color/primary_text"
-                tools:text="Spaghetti Carbonara" />
-
-            <!-- Cuisine and Meal Type Row -->
-            <LinearLayout
+            <!-- Recipe Info Card -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:orientation="horizontal">
+                app:cardCornerRadius="20dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="@color/surface">
 
-                <TextView
-                    android:id="@+id/tv_cuisine"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="16dp"
-                    android:textSize="14sp"
-                    android:textColor="@color/secondary_text"
-                    android:drawablePadding="4dp"
-                    app:drawableStartCompat="@drawable/ic_cuisine"
-                    tools:text="Cuisine: Italian" />
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-                <TextView
-                    android:id="@+id/tv_meal_type"
-                    android:layout_width="wrap_content"
+                    <!-- Recipe Name -->
+                    <TextView
+                        android:id="@+id/tv_recipe_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="26sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/primary_text"
+                        android:fontFamily="sans-serif-medium"
+                        android:lineSpacingExtra="4dp"
+                        tools:text="Spaghetti Carbonara" />
+
+                    <!-- Tags Row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <!-- Cuisine Tag -->
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp"
+                            app:cardBackgroundColor="@color/surface_variant">
+
+                            <TextView
+                                android:id="@+id/tv_cuisine"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingStart="14dp"
+                                android:paddingEnd="14dp"
+                                android:paddingTop="8dp"
+                                android:paddingBottom="8dp"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/primary"
+                                android:drawablePadding="6dp"
+                                app:drawableStartCompat="@drawable/ic_cuisine"
+                                app:drawableTint="@color/primary"
+                                tools:text="Italian" />
+                        </androidx.cardview.widget.CardView>
+
+                        <!-- Meal Type Tag -->
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp"
+                            app:cardBackgroundColor="@color/surface_variant">
+
+                            <TextView
+                                android:id="@+id/tv_meal_type"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingStart="14dp"
+                                android:paddingEnd="14dp"
+                                android:paddingTop="8dp"
+                                android:paddingBottom="8dp"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/accent"
+                                android:drawablePadding="6dp"
+                                app:drawableStartCompat="@drawable/ic_meal"
+                                app:drawableTint="@color/accent"
+                                tools:text="Dinner" />
+                        </androidx.cardview.widget.CardView>
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="1dp"
+                            android:layout_weight="1" />
+
+                        <!-- Rating Badge -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:id="@+id/tv_rating_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/accent"
+                                tools:text="4.5" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="★"
+                                android:textColor="@color/accent"
+                                android:textSize="20sp"
+                                android:layout_marginStart="4dp" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Rating Bar (hidden, for compatibility) -->
+                    <RatingBar
+                        android:id="@+id/rating_bar"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:visibility="gone"
+                        android:numStars="5"
+                        android:stepSize="0.5"
+                        tools:rating="4.5" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Ingredients Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="@color/surface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:textColor="@color/secondary_text"
-                    android:drawablePadding="4dp"
-                    app:drawableStartCompat="@drawable/ic_meal"
-                    tools:text="Meal Type: Dinner" />
-            </LinearLayout>
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-            <!-- Rating -->
-            <RatingBar
-                android:id="@+id/rating_bar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:numStars="5"
-                android:stepSize="0.5"
-                android:isIndicator="true"
-                style="?android:attr/ratingBarStyleSmall"
-                android:transformPivotX="0dp"
-                android:transformPivotY="0dp"
-                android:scaleX="1.5"
-                android:scaleY="1.5" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ingredients"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/primary_text"
+                        android:fontFamily="sans-serif-medium" />
 
-            <!-- Divider -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="16dp"
-                android:background="@color/divider" />
+                    <View
+                        android:layout_width="40dp"
+                        android:layout_height="3dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@color/primary" />
 
-            <!-- Ingredients Section -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/ingredients"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/primary_text" />
+                    <TextView
+                        android:id="@+id/tv_ingredients"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:textSize="15sp"
+                        android:textColor="@color/secondary_text"
+                        android:lineSpacingExtra="6dp"
+                        tools:text="• 400g spaghetti\n• 200g guanciale\n• 4 egg yolks\n• 100g Pecorino Romano" />
 
-            <TextView
-                android:id="@+id/tv_ingredients"
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Steps Card -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textSize="14sp"
-                android:textColor="@color/secondary_text"
-                android:lineSpacingExtra="4dp"
-                tools:text="• 400g spaghetti\n• 200g guanciale\n• 4 egg yolks\n• 100g Pecorino Romano" />
-
-            <!-- Divider -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
                 android:layout_marginTop="16dp"
-                android:background="@color/divider" />
+                android:layout_marginBottom="20dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="@color/surface">
 
-            <!-- Steps Section -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/steps"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/primary_text" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-            <TextView
-                android:id="@+id/tv_steps"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textSize="14sp"
-                android:textColor="@color/secondary_text"
-                android:lineSpacingExtra="4dp"
-                tools:text="1. Cook pasta al dente\n2. Fry guanciale until crispy\n3. Mix egg yolks with cheese\n4. Combine all ingredients" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/steps"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/primary_text"
+                        android:fontFamily="sans-serif-medium" />
+
+                    <View
+                        android:layout_width="40dp"
+                        android:layout_height="3dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@color/primary" />
+
+                    <TextView
+                        android:id="@+id/tv_steps"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:textSize="15sp"
+                        android:textColor="@color/secondary_text"
+                        android:lineSpacingExtra="6dp"
+                        tools:text="1. Cook pasta al dente\n2. Fry guanciale until crispy\n3. Mix egg yolks with cheese\n4. Combine all ingredients" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
@@ -173,6 +284,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:indeterminateTint="@color/primary"
         android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

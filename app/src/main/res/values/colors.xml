@@ -1,35 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary Colors -->
-    <color name="primary">#FF6B35</color>
-    <color name="primary_dark">#E85A2A</color>
-    <color name="primary_light">#FF8A5C</color>
+    <!-- Primary Colors - Modern Purple/Blue gradient -->
+    <color name="primary">#6366F1</color>
+    <color name="primary_dark">#4F46E5</color>
+    <color name="primary_light">#818CF8</color>
 
-    <!-- Accent Colors -->
-    <color name="accent">#FFC107</color>
-    <color name="accent_dark">#FFA000</color>
-    <color name="accent_light">#FFD54F</color>
+    <!-- Accent Colors - Vibrant Coral -->
+    <color name="accent">#F59E0B</color>
+    <color name="accent_dark">#D97706</color>
+    <color name="accent_light">#FBBF24</color>
 
     <!-- Background Colors -->
-    <color name="background">#FFFFFF</color>
-    <color name="background_light">#F5F5F5</color>
+    <color name="background">#F8FAFC</color>
+    <color name="background_light">#F1F5F9</color>
     <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#F1F5F9</color>
 
     <!-- Text Colors -->
-    <color name="primary_text">#212121</color>
-    <color name="secondary_text">#757575</color>
-    <color name="hint_text">#BDBDBD</color>
+    <color name="primary_text">#0F172A</color>
+    <color name="secondary_text">#64748B</color>
+    <color name="hint_text">#CBD5E1</color>
 
     <!-- Gradient Colors -->
-    <color name="gradient_start">#FF6B35</color>
-    <color name="gradient_end">#FFA726</color>
+    <color name="gradient_start">#6366F1</color>
+    <color name="gradient_end">#8B5CF6</color>
 
-    <!-- Other Colors -->
-    <color name="divider">#E0E0E0</color>
-    <color name="error">#F44336</color>
-    <color name="success">#4CAF50</color>
+    <!-- Status Colors -->
+    <color name="error">#EF4444</color>
+    <color name="success">#10B981</color>
+    <color name="warning">#F59E0B</color>
+    <color name="info">#3B82F6</color>
+
+    <!-- Semantic Colors -->
+    <color name="divider">#E2E8F0</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
+    <color name="overlay">#1A1A1A80</color>
 
     <!-- Material Design Colors -->
     <color name="colorPrimary">@color/primary</color>

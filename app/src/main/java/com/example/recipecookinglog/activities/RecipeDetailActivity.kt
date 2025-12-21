@@ -72,9 +72,15 @@ class RecipeDetailActivity : AppCompatActivity() {
     private fun displayRecipe(recipe: Recipe) {
         binding.apply {
             tvRecipeName.text = recipe.name
-            tvCuisine.text = "Cuisine: ${recipe.cuisine}"
-            tvMealType.text = "Meal Type: ${recipe.mealType}"
+            tvCuisine.text = recipe.cuisine
+            tvMealType.text = recipe.mealType
+
+            // Display rating value
+            tvRatingValue.text = if (recipe.rating > 0) String.format("%.1f", recipe.rating) else "N/A"
+
+            // Keep compatibility with rating bar
             ratingBar.rating = recipe.rating
+
             tvIngredients.text = recipe.ingredients
             tvSteps.text = recipe.steps
 

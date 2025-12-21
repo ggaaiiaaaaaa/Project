@@ -5,23 +5,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/background"
     tools:context=".activities.MainActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:elevation="4dp"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
+            android:layout_height="64dp"
             android:background="@color/primary"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:titleTextColor="@color/white"
+            app:titleTextAppearance="@style/ToolbarTitleStyle"
             app:title="@string/my_recipes" />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Changed from FragmentContainerView to fragment with full namespace -->
+    <!-- Fragment Container -->
     <fragment
         android:id="@+id/nav_host_fragment"
         android:name="androidx.navigation.fragment.NavHostFragment"
@@ -31,15 +35,22 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:navGraph="@navigation/nav_graph" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <!-- Modern Floating Action Button with extended style -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_add"
-        android:contentDescription="@string/add_recipe"
-        app:backgroundTint="@color/accent"
-        app:tint="@android:color/white" />
+        android:layout_margin="20dp"
+        android:text="Add Recipe"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:icon="@drawable/ic_add"
+        app:iconSize="24dp"
+        app:backgroundTint="@color/primary"
+        app:tint="@android:color/white"
+        android:elevation="8dp"
+        app:cornerRadius="28dp"
+        android:contentDescription="@string/add_recipe" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

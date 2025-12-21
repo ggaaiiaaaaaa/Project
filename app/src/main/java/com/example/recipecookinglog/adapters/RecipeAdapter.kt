@@ -36,6 +36,12 @@ class RecipeAdapter(
                 tvRecipeName.text = recipe.name
                 tvCuisine.text = recipe.cuisine
                 tvMealType.text = recipe.mealType
+
+                // Set rating text (for the badge)
+                val ratingText = if (recipe.rating > 0) String.format("%.1f", recipe.rating) else "N/A"
+                tvRating.text = ratingText
+
+                // Keep compatibility with rating bar if it exists
                 ratingBar.rating = recipe.rating
 
                 // Load image
