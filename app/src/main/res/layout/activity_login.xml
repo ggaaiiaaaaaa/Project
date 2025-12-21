@@ -18,16 +18,38 @@
             android:layout_height="wrap_content"
             android:padding="24dp">
 
+            <!-- Logo Card at Top -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_logo"
+                android:layout_width="140dp"
+                android:layout_height="140dp"
+                android:layout_marginTop="40dp"
+                app:cardCornerRadius="70dp"
+                app:cardElevation="12dp"
+                app:cardBackgroundColor="@color/white"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <ImageView
+                    android:id="@+id/iv_logo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/logo_recipe_cooking"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="@string/app_logo" />
+            </androidx.cardview.widget.CardView>
+
             <!-- Modern Card Container -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/card_container"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="80dp"
+                android:layout_marginTop="24dp"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="8dp"
                 android:background="@color/surface"
-                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/card_logo"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 
@@ -37,23 +59,12 @@
                     android:orientation="vertical"
                     android:padding="32dp">
 
-                    <!-- Logo/Icon -->
-                    <ImageView
-                        android:id="@+id/iv_logo"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_recipe_logo"
-                        android:contentDescription="@string/app_logo"
-                        app:tint="@color/primary" />
-
                     <!-- Title -->
                     <TextView
                         android:id="@+id/tv_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:layout_marginTop="16dp"
                         android:text="@string/welcome_back"
                         android:textSize="32sp"
                         android:textStyle="bold"
