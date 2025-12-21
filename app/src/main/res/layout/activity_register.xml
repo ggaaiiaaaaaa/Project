@@ -21,8 +21,8 @@
             <!-- Logo Card at Top -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/card_logo"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
+                android:layout_width="@dimen/register_logo_card_size"
+                android:layout_height="@dimen/register_logo_card_size"
                 android:layout_marginTop="20dp"
                 app:cardCornerRadius="60dp"
                 app:cardElevation="12dp"

@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:drawable="@drawable/logo_recipe_cooking"
         android:gravity="center"
-        android:width="250dp"
-        android:height="250dp">
-        <bitmap
-            android:gravity="center"
-            android:src="@drawable/logo_recipe_cooking" />
-    </item>
+        android:width="108dp"
+        android:height="108dp" />
 </layer-list>

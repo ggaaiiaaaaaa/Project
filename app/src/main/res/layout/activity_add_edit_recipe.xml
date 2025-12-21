@@ -38,8 +38,8 @@
             <!-- Image Section -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
-                android:layout_height="240dp"
-                app:cardCornerRadius="20dp"
+                android:layout_height="@dimen/add_recipe_image_height"
+                app:cardCornerRadius="@dimen/corner_radius_lg"
                 app:cardElevation="8dp"
                 app:strokeWidth="0dp">
 

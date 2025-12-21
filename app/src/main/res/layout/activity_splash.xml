@@ -9,9 +9,9 @@
     <!-- Logo Container -->
     <androidx.cardview.widget.CardView
         android:id="@+id/card_logo"
-        android:layout_width="220dp"
-        android:layout_height="220dp"
-        app:cardCornerRadius="110dp"
+        android:layout_width="@dimen/splash_logo_card_size"
+        android:layout_height="@dimen/splash_logo_card_size"
+        app:cardCornerRadius="100dp"
         app:cardElevation="12dp"
         app:cardBackgroundColor="@color/white"
         app:layout_constraintTop_toTopOf="parent"
@@ -22,11 +22,11 @@
 
         <ImageView
             android:id="@+id/iv_logo"
-            android:layout_width="325dp"
-            android:layout_height="261dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_gravity="center"
             android:contentDescription="@string/app_name"
-            android:scaleType="centerInside"
+            android:scaleType="centerCrop"
             android:src="@drawable/logo_recipe_cooking" />
     </androidx.cardview.widget.CardView>
 
