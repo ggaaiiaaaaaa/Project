@@ -1,17 +1,18 @@
 package com.example.recipecookinglog.repositories
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
+import android.provider.MediaStore
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.example.recipecookinglog.models.Recipe
-import com.example.recipecookinglog.utils.DatabaseHelper
 import com.example.recipecookinglog.utils.FirebaseHelper
 import com.example.recipecookinglog.utils.RecipeDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 
-class RecipeRepository(context: Context) {
+class RecipeRepository(private val context: Context) {
 
     private val firebaseHelper = FirebaseHelper()
     private val recipeDao = RecipeDatabase.getDatabase(context).recipeDao()
@@ -42,9 +43,10 @@ class RecipeRepository(context: Context) {
     suspend fun addRecipe(recipe: Recipe, imageUri: Uri?): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
-                // Upload image if provided
+                // Upload and compress image if provided
                 if (imageUri != null) {
-                    val imageResult = firebaseHelper.uploadImage(imageUri)
+                    val compressedUri = compressImage(imageUri)
+                    val imageResult = firebaseHelper.uploadImage(compressedUri)
                     if (imageResult.isSuccess) {
                         recipe.imageUrl = imageResult.getOrNull() ?: ""
                     }
@@ -67,9 +69,10 @@ class RecipeRepository(context: Context) {
     suspend fun updateRecipe(recipe: Recipe, imageUri: Uri?): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                // Upload new image if provided
+                // Upload new compressed image if provided
                 if (imageUri != null) {
-                    val imageResult = firebaseHelper.uploadImage(imageUri)
+                    val compressedUri = compressImage(imageUri)
+                    val imageResult = firebaseHelper.uploadImage(compressedUri)
                     if (imageResult.isSuccess) {
                         recipe.imageUrl = imageResult.getOrNull() ?: recipe.imageUrl
                     }
@@ -103,6 +106,45 @@ class RecipeRepository(context: Context) {
     suspend fun getRecipeById(recipeId: String): Recipe? {
         return withContext(Dispatchers.IO) {
             recipeDao.getRecipeById(recipeId)
+        }
+    }
+
+    // Compress image before uploading
+    private fun compressImage(uri: Uri): Uri {
+        try {
+            val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+
+            // Calculate new dimensions (max 1024x1024)
+            val maxSize = 1024
+            val ratio = Math.min(
+                maxSize.toFloat() / bitmap.width,
+                maxSize.toFloat() / bitmap.height
+            )
+
+            val width = (ratio * bitmap.width).toInt()
+            val height = (ratio * bitmap.height).toInt()
+
+            val resizedBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true)
+
+            // Compress to JPEG with 75% quality
+            val outputStream = ByteArrayOutputStream()
+            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 75, outputStream)
+
+            // Save to cache and return URI
+            val path = MediaStore.Images.Media.insertImage(
+                context.contentResolver,
+                resizedBitmap,
+                "compressed_${System.currentTimeMillis()}",
+                null
+            )
+
+            bitmap.recycle()
+            resizedBitmap.recycle()
+
+            return Uri.parse(path) ?: uri
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return uri // Return original if compression fails
         }
     }
 }

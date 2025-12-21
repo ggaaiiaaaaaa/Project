@@ -12,7 +12,7 @@ object Constants {
     const val CAMERA_REQUEST = 1002
 
     val CUISINES = listOf(
-        "All", "Italian", "Chinese", "Mexican", "Indian",
+        "All", "Filipino", "Italian", "Chinese", "Mexican", "Indian",
         "Japanese", "French", "Thai", "Mediterranean", "American"
     )
 
