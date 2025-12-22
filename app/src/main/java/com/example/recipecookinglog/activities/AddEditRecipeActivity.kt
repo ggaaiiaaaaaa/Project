@@ -1,6 +1,5 @@
 package com.example.recipecookinglog.activities
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -26,18 +25,52 @@ class AddEditRecipeActivity : AppCompatActivity() {
     private var currentRecipe: Recipe? = null
     private var isEditMode = false
 
+    // Use GetContent for simpler, more reliable image picking
     private val imagePickerLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            selectedImageUri = result.data?.data
-            selectedImageUri?.let { uri ->
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { originalUri ->
+            android.util.Log.d("AddEditRecipe", "Image selected: $originalUri")
+            
+            // Copy the image to app's internal storage to ensure reliable access
+            try {
+                val copiedUri = copyImageToInternalStorage(originalUri)
+                if (copiedUri != null) {
+                    selectedImageUri = copiedUri
+                    android.util.Log.d("AddEditRecipe", "Image copied to: $copiedUri")
+                } else {
+                    selectedImageUri = originalUri
+                    android.util.Log.d("AddEditRecipe", "Using original URI: $originalUri")
+                }
+                
                 Glide.with(this)
-                    .load(uri)
+                    .load(selectedImageUri)
                     .centerCrop()
                     .into(binding.ivRecipeImage)
                 binding.btnSelectImage.text = "Change Image"
+            } catch (e: Exception) {
+                android.util.Log.e("AddEditRecipe", "Error handling image: ${e.message}", e)
+                Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+    
+    private fun copyImageToInternalStorage(sourceUri: Uri): Uri? {
+        return try {
+            val inputStream = contentResolver.openInputStream(sourceUri) ?: return null
+            val fileName = "recipe_image_${System.currentTimeMillis()}.jpg"
+            val outputFile = java.io.File(filesDir, fileName)
+            
+            inputStream.use { input ->
+                java.io.FileOutputStream(outputFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            
+            android.net.Uri.fromFile(outputFile)
+        } catch (e: Exception) {
+            android.util.Log.e("AddEditRecipe", "Failed to copy image: ${e.message}", e)
+            null
         }
     }
 
@@ -107,9 +140,8 @@ class AddEditRecipeActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         binding.btnSelectImage.setOnClickListener {
-            val intent = Intent(Intent.ACTION_PICK)
-            intent.type = "image/*"
-            imagePickerLauncher.launch(intent)
+            // GetContent launcher only needs the MIME type
+            imagePickerLauncher.launch("image/*")
         }
 
         binding.btnSave.setOnClickListener {
