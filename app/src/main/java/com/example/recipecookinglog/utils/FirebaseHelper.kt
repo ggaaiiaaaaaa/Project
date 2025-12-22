@@ -121,20 +121,23 @@ class FirebaseHelper {
                     Exception("User not logged in")
                 )
 
+                // Start with base query - only filter by userId
                 var query: Query = firestore.collection(Constants.COLLECTION_RECIPES)
                     .whereEqualTo("userId", userId)
                     .orderBy("updatedAt", Query.Direction.DESCENDING)
 
+                val snapshot = query.get().await()
+                var recipes = snapshot.documents.mapNotNull { it.toObject(Recipe::class.java) }
+
+                // Apply filters in memory to avoid composite index requirements
                 if (cuisine != null && cuisine != "All") {
-                    query = query.whereEqualTo("cuisine", cuisine)
+                    recipes = recipes.filter { it.cuisine == cuisine }
                 }
 
                 if (mealType != null && mealType != "All") {
-                    query = query.whereEqualTo("mealType", mealType)
+                    recipes = recipes.filter { it.mealType == mealType }
                 }
 
-                val snapshot = query.get().await()
-                val recipes = snapshot.documents.mapNotNull { it.toObject(Recipe::class.java) }
                 Result.success(recipes)
             }
         } catch (e: Exception) {

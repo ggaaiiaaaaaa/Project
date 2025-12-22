@@ -1,11 +1,13 @@
 package com.example.recipecookinglog.adapters
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.recipecookinglog.R
 import com.example.recipecookinglog.databinding.ItemRecipeBinding
 import com.example.recipecookinglog.models.Recipe
@@ -45,13 +47,18 @@ class RecipeAdapter(
                 ratingBar.rating = recipe.rating
 
                 // Load image
+                Log.d("RecipeAdapter", "Loading image for ${recipe.name}: ${recipe.imageUrl}")
+
                 if (recipe.imageUrl.isNotEmpty()) {
                     Glide.with(itemView.context)
                         .load(recipe.imageUrl)
                         .centerCrop()
                         .placeholder(R.drawable.ic_recipe_placeholder)
+                        .error(R.drawable.ic_recipe_placeholder)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
                         .into(ivRecipeImage)
                 } else {
+                    Log.d("RecipeAdapter", "No image URL for ${recipe.name}, using placeholder")
                     ivRecipeImage.setImageResource(R.drawable.ic_recipe_placeholder)
                 }
 

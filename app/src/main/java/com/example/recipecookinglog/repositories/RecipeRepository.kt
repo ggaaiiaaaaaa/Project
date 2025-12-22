@@ -2,8 +2,9 @@ package com.example.recipecookinglog.repositories
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
-import android.provider.MediaStore
+import android.util.Log
 import androidx.lifecycle.LiveData
 import com.example.recipecookinglog.models.Recipe
 import com.example.recipecookinglog.utils.FirebaseHelper
@@ -11,6 +12,8 @@ import com.example.recipecookinglog.utils.RecipeDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 
 class RecipeRepository(private val context: Context) {
 
@@ -45,11 +48,23 @@ class RecipeRepository(private val context: Context) {
             try {
                 // Upload and compress image if provided
                 if (imageUri != null) {
-                    val compressedUri = compressImage(imageUri)
+                    Log.d("RecipeRepository", "Starting image upload for URI: $imageUri")
+
+                    val compressedUri = compressAndSaveImage(imageUri)
+                    Log.d("RecipeRepository", "Image compressed, uploading to Firebase...")
+
                     val imageResult = firebaseHelper.uploadImage(compressedUri)
+
                     if (imageResult.isSuccess) {
                         recipe.imageUrl = imageResult.getOrNull() ?: ""
+                        Log.d("RecipeRepository", "Image uploaded successfully: ${recipe.imageUrl}")
+                    } else {
+                        Log.e("RecipeRepository", "Image upload failed: ${imageResult.exceptionOrNull()?.message}")
+                        // Continue without image rather than failing completely
+                        recipe.imageUrl = ""
                     }
+                } else {
+                    Log.d("RecipeRepository", "No image selected")
                 }
 
                 // Add to Firebase
@@ -57,9 +72,11 @@ class RecipeRepository(private val context: Context) {
                 if (result.isSuccess) {
                     recipe.isSynced = true
                     recipeDao.insertRecipe(recipe)
+                    Log.d("RecipeRepository", "Recipe saved successfully")
                 }
                 result
             } catch (e: Exception) {
+                Log.e("RecipeRepository", "Error adding recipe: ${e.message}", e)
                 Result.failure(e)
             }
         }
@@ -71,10 +88,16 @@ class RecipeRepository(private val context: Context) {
             try {
                 // Upload new compressed image if provided
                 if (imageUri != null) {
-                    val compressedUri = compressImage(imageUri)
+                    Log.d("RecipeRepository", "Updating image for URI: $imageUri")
+
+                    val compressedUri = compressAndSaveImage(imageUri)
                     val imageResult = firebaseHelper.uploadImage(compressedUri)
+
                     if (imageResult.isSuccess) {
                         recipe.imageUrl = imageResult.getOrNull() ?: recipe.imageUrl
+                        Log.d("RecipeRepository", "Image updated successfully")
+                    } else {
+                        Log.e("RecipeRepository", "Image update failed: ${imageResult.exceptionOrNull()?.message}")
                     }
                 }
 
@@ -86,6 +109,7 @@ class RecipeRepository(private val context: Context) {
                 }
                 result
             } catch (e: Exception) {
+                Log.e("RecipeRepository", "Error updating recipe: ${e.message}", e)
                 Result.failure(e)
             }
         }
@@ -109,41 +133,62 @@ class RecipeRepository(private val context: Context) {
         }
     }
 
-    // Compress image before uploading
-    private fun compressImage(uri: Uri): Uri {
+    // Improved compress and save image method
+    private fun compressAndSaveImage(uri: Uri): Uri {
         try {
-            val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+            Log.d("RecipeRepository", "Compressing image from URI: $uri")
+
+            // Read the image from URI
+            val inputStream = context.contentResolver.openInputStream(uri)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream?.close()
+
+            if (bitmap == null) {
+                Log.e("RecipeRepository", "Failed to decode bitmap")
+                return uri
+            }
+
+            Log.d("RecipeRepository", "Original bitmap size: ${bitmap.width}x${bitmap.height}")
 
             // Calculate new dimensions (max 1024x1024)
             val maxSize = 1024
-            val ratio = Math.min(
+            val ratio = minOf(
                 maxSize.toFloat() / bitmap.width,
                 maxSize.toFloat() / bitmap.height
             )
 
-            val width = (ratio * bitmap.width).toInt()
-            val height = (ratio * bitmap.height).toInt()
+            val newWidth = (ratio * bitmap.width).toInt()
+            val newHeight = (ratio * bitmap.height).toInt()
 
-            val resizedBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true)
+            Log.d("RecipeRepository", "Resizing to: ${newWidth}x${newHeight}")
 
-            // Compress to JPEG with 75% quality
+            val resizedBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+
+            // Compress to JPEG with 80% quality
             val outputStream = ByteArrayOutputStream()
-            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 75, outputStream)
+            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+            val byteArray = outputStream.toByteArray()
 
-            // Save to cache and return URI
-            val path = MediaStore.Images.Media.insertImage(
-                context.contentResolver,
-                resizedBitmap,
-                "compressed_${System.currentTimeMillis()}",
-                null
-            )
+            Log.d("RecipeRepository", "Compressed size: ${byteArray.size / 1024}KB")
 
+            // Save to cache directory
+            val cacheDir = context.cacheDir
+            val imageFile = File(cacheDir, "compressed_${System.currentTimeMillis()}.jpg")
+            val fileOutputStream = FileOutputStream(imageFile)
+            fileOutputStream.write(byteArray)
+            fileOutputStream.close()
+
+            // Clean up
             bitmap.recycle()
             resizedBitmap.recycle()
 
-            return Uri.parse(path) ?: uri
+            val resultUri = Uri.fromFile(imageFile)
+            Log.d("RecipeRepository", "Compressed image saved to: $resultUri")
+
+            return resultUri
+
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("RecipeRepository", "Error compressing image: ${e.message}", e)
             return uri // Return original if compression fails
         }
     }
