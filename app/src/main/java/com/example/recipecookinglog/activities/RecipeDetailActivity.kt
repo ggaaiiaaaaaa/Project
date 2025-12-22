@@ -2,6 +2,7 @@ package com.example.recipecookinglog.activities
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -11,6 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.recipecookinglog.R
 import com.example.recipecookinglog.databinding.ActivityRecipeDetailBinding
 import com.example.recipecookinglog.models.Recipe
@@ -84,12 +86,21 @@ class RecipeDetailActivity : AppCompatActivity() {
             tvIngredients.text = recipe.ingredients
             tvSteps.text = recipe.steps
 
+            // Load image with better error handling
+            Log.d("RecipeDetail", "Loading image: ${recipe.imageUrl}")
+
             if (recipe.imageUrl.isNotEmpty()) {
                 Glide.with(this@RecipeDetailActivity)
                     .load(recipe.imageUrl)
                     .centerCrop()
+                    .placeholder(R.drawable.ic_recipe_placeholder)
+                    .error(R.drawable.ic_recipe_placeholder)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(ivRecipeImage)
+
+                Log.d("RecipeDetail", "Image URL is valid: ${recipe.imageUrl}")
             } else {
+                Log.d("RecipeDetail", "No image URL available")
                 ivRecipeImage.setImageResource(R.drawable.ic_recipe_placeholder)
             }
         }
