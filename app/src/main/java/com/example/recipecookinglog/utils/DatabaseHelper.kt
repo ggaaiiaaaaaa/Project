@@ -34,6 +34,9 @@ abstract class RecipeDatabase : RoomDatabase() {
 interface RecipeDao {
     @Query("SELECT * FROM recipes ORDER BY updatedAt DESC")
     fun getAllRecipes(): LiveData<List<Recipe>>
+    
+    @Query("SELECT * FROM recipes ORDER BY updatedAt DESC")
+    suspend fun getAllRecipesSync(): List<Recipe>
 
     @Query("SELECT * FROM recipes WHERE id = :recipeId")
     suspend fun getRecipeById(recipeId: String): Recipe?

@@ -88,6 +88,7 @@ class FirebaseHelper {
                 recipe.updatedAt = System.currentTimeMillis()
 
                 Log.d(TAG, "Adding recipe: ${recipe.name} for user: ${currentUser.uid}")
+                Log.d(TAG, "Recipe image URL: ${recipe.imageUrl}")
 
                 docRef.set(recipe.toMap()).await()
 
@@ -106,6 +107,7 @@ class FirebaseHelper {
                 recipe.updatedAt = System.currentTimeMillis()
 
                 Log.d(TAG, "Updating recipe: ${recipe.id}")
+                Log.d(TAG, "Recipe image URL: ${recipe.imageUrl}")
 
                 firestore.collection(Constants.COLLECTION_RECIPES)
                     .document(recipe.id)
@@ -184,7 +186,7 @@ class FirebaseHelper {
                             isSynced = false
                         )
 
-                        Log.d(TAG, "Parsed recipe: ${recipe.name}, id: ${recipe.id}")
+                        Log.d(TAG, "Parsed recipe: ${recipe.name}, id: ${recipe.id}, imageUrl: ${recipe.imageUrl}")
                         recipe
                     } catch (e: Exception) {
                         Log.e(TAG, "Error parsing recipe from document ${doc.id}: ${e.message}", e)
@@ -219,7 +221,41 @@ class FirebaseHelper {
         }
     }
 
-    // Image upload with progress
+    // Image upload with byte array (NEW METHOD)
+    suspend fun uploadImageBytes(byteArray: ByteArray): Result<String> {
+        return try {
+            withTimeout(TIMEOUT_MS) {
+                val fileName = "recipe_images/${UUID.randomUUID()}.jpg"
+                val ref = storage.reference.child(fileName)
+
+                Log.d(TAG, "=== FIREBASE UPLOAD START ===")
+                Log.d(TAG, "Uploading byte array, size: ${byteArray.size / 1024}KB")
+                Log.d(TAG, "Target path: $fileName")
+
+                // Upload byte array
+                Log.d(TAG, "Starting putBytes...")
+                val uploadTask = ref.putBytes(byteArray).await()
+                Log.d(TAG, "putBytes completed, bytes transferred: ${uploadTask.bytesTransferred}")
+
+                // Get download URL
+                Log.d(TAG, "Getting download URL...")
+                val url = ref.downloadUrl.await().toString()
+
+                Log.d(TAG, "=== FIREBASE UPLOAD SUCCESS ===")
+                Log.d(TAG, "Download URL: $url")
+
+                Result.success(url)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "=== FIREBASE UPLOAD FAILED ===")
+            Log.e(TAG, "Error type: ${e.javaClass.simpleName}")
+            Log.e(TAG, "Error message: ${e.message}")
+            e.printStackTrace()
+            Result.failure(Exception("Failed to upload image: ${e.message}"))
+        }
+    }
+
+    // Image upload with URI (KEPT FOR COMPATIBILITY)
     suspend fun uploadImage(uri: Uri): Result<String> {
         return try {
             withTimeout(TIMEOUT_MS) {

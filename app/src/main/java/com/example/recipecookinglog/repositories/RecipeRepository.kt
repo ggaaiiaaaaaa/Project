@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileOutputStream
 
 class RecipeRepository(private val context: Context) {
 
@@ -50,25 +49,21 @@ class RecipeRepository(private val context: Context) {
                 if (imageUri != null) {
                     Log.d("RecipeRepository", "Starting image upload for URI: $imageUri")
 
-                    // Compress the image
-                    val compressedFile = compressImage(imageUri)
+                    // Convert to byte array instead of file
+                    val byteArray = compressImageToByteArray(imageUri)
 
-                    if (compressedFile != null) {
-                        Log.d("RecipeRepository", "Image compressed successfully: ${compressedFile.absolutePath}")
+                    if (byteArray != null) {
+                        Log.d("RecipeRepository", "Image compressed successfully: ${byteArray.size / 1024}KB")
 
-                        // Upload to Firebase Storage
-                        val imageResult = firebaseHelper.uploadImage(Uri.fromFile(compressedFile))
+                        // Upload byte array to Firebase Storage
+                        val imageResult = firebaseHelper.uploadImageBytes(byteArray)
 
                         if (imageResult.isSuccess) {
                             val downloadUrl = imageResult.getOrNull()
                             recipe.imageUrl = downloadUrl ?: ""
                             Log.d("RecipeRepository", "Image uploaded successfully: ${recipe.imageUrl}")
-
-                            // Clean up temporary file
-                            compressedFile.delete()
                         } else {
                             Log.e("RecipeRepository", "Image upload failed: ${imageResult.exceptionOrNull()?.message}")
-                            // Continue without image
                             recipe.imageUrl = ""
                         }
                     } else {
@@ -109,15 +104,14 @@ class RecipeRepository(private val context: Context) {
                 if (imageUri != null) {
                     Log.d("RecipeRepository", "Updating image for URI: $imageUri")
 
-                    val compressedFile = compressImage(imageUri)
+                    val byteArray = compressImageToByteArray(imageUri)
 
-                    if (compressedFile != null) {
-                        val imageResult = firebaseHelper.uploadImage(Uri.fromFile(compressedFile))
+                    if (byteArray != null) {
+                        val imageResult = firebaseHelper.uploadImageBytes(byteArray)
 
                         if (imageResult.isSuccess) {
                             recipe.imageUrl = imageResult.getOrNull() ?: recipe.imageUrl
                             Log.d("RecipeRepository", "Image updated successfully: ${recipe.imageUrl}")
-                            compressedFile.delete()
                         } else {
                             Log.e("RecipeRepository", "Image update failed: ${imageResult.exceptionOrNull()?.message}")
                         }
@@ -161,10 +155,10 @@ class RecipeRepository(private val context: Context) {
     }
 
     /**
-     * Compress and save image to a temporary file
-     * Returns the File object if successful, null otherwise
+     * Compress image to byte array
+     * Returns the byte array if successful, null otherwise
      */
-    private fun compressImage(uri: Uri): File? {
+    private fun compressImageToByteArray(uri: Uri): ByteArray? {
         try {
             Log.d("RecipeRepository", "Compressing image from URI: $uri")
 
@@ -201,19 +195,11 @@ class RecipeRepository(private val context: Context) {
 
             Log.d("RecipeRepository", "Compressed size: ${byteArray.size / 1024}KB")
 
-            // Save to cache directory with unique name
-            val cacheDir = context.cacheDir
-            val imageFile = File(cacheDir, "recipe_${System.currentTimeMillis()}.jpg")
-            val fileOutputStream = FileOutputStream(imageFile)
-            fileOutputStream.write(byteArray)
-            fileOutputStream.close()
-
             // Clean up bitmaps
             bitmap.recycle()
             resizedBitmap.recycle()
 
-            Log.d("RecipeRepository", "Compressed image saved to: ${imageFile.absolutePath}")
-            return imageFile
+            return byteArray
 
         } catch (e: Exception) {
             Log.e("RecipeRepository", "Error compressing image: ${e.message}", e)
