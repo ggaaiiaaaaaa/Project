@@ -88,7 +88,7 @@ class FirebaseHelper {
                 recipe.updatedAt = System.currentTimeMillis()
 
                 Log.d(TAG, "Adding recipe: ${recipe.name} for user: ${currentUser.uid}")
-                Log.d(TAG, "Recipe image URL: ${recipe.imageUrl}")
+                Log.d(TAG, "Recipe image URL (Firebase Storage): ${recipe.imageUrl}")
 
                 docRef.set(recipe.toMap()).await()
 
@@ -107,7 +107,7 @@ class FirebaseHelper {
                 recipe.updatedAt = System.currentTimeMillis()
 
                 Log.d(TAG, "Updating recipe: ${recipe.id}")
-                Log.d(TAG, "Recipe image URL: ${recipe.imageUrl}")
+                Log.d(TAG, "Recipe image URL (Firebase Storage): ${recipe.imageUrl}")
 
                 firestore.collection(Constants.COLLECTION_RECIPES)
                     .document(recipe.id)
@@ -153,7 +153,7 @@ class FirebaseHelper {
 
                 Log.d(TAG, "Fetching recipes for user: ${currentUser.uid}, cuisine: $cuisine, mealType: $mealType")
 
-                // Simple query - just filter by userId
+                // Fetch all user's recipes
                 val snapshot = firestore.collection(Constants.COLLECTION_RECIPES)
                     .whereEqualTo("userId", currentUser.uid)
                     .get()
@@ -161,7 +161,7 @@ class FirebaseHelper {
 
                 Log.d(TAG, "Fetched ${snapshot.documents.size} documents from Firestore")
 
-                // Manually parse documents to handle missing fields gracefully
+                // Parse documents
                 var recipes = snapshot.documents.mapNotNull { doc ->
                     try {
                         val data = doc.data
@@ -170,7 +170,6 @@ class FirebaseHelper {
                             return@mapNotNull null
                         }
 
-                        // Create Recipe with safe defaults for missing fields
                         val recipe = Recipe(
                             id = doc.id,
                             name = data["name"] as? String ?: "",
@@ -186,7 +185,7 @@ class FirebaseHelper {
                             isSynced = false
                         )
 
-                        Log.d(TAG, "Parsed recipe: ${recipe.name}, id: ${recipe.id}, imageUrl: ${recipe.imageUrl}")
+                        Log.d(TAG, "Parsed recipe: ${recipe.name}, imageUrl: ${recipe.imageUrl}")
                         recipe
                     } catch (e: Exception) {
                         Log.e(TAG, "Error parsing recipe from document ${doc.id}: ${e.message}", e)
@@ -196,21 +195,19 @@ class FirebaseHelper {
 
                 Log.d(TAG, "Successfully parsed ${recipes.size} recipes")
 
-                // Apply filters in memory
+                // Apply filters
                 if (cuisine != null && cuisine != "All") {
                     recipes = recipes.filter { it.cuisine == cuisine }
-                    Log.d(TAG, "After cuisine filter: ${recipes.size} recipes")
                 }
 
                 if (mealType != null && mealType != "All") {
                     recipes = recipes.filter { it.mealType == mealType }
-                    Log.d(TAG, "After mealType filter: ${recipes.size} recipes")
                 }
 
-                // Sort by updatedAt in descending order (newest first)
+                // Sort by updatedAt
                 recipes = recipes.sortedByDescending { it.updatedAt }
 
-                Log.d(TAG, "Returning ${recipes.size} recipes after filtering and sorting")
+                Log.d(TAG, "Returning ${recipes.size} recipes after filtering")
 
                 Result.success(recipes)
             }
@@ -221,33 +218,34 @@ class FirebaseHelper {
         }
     }
 
-    // Image upload with byte array (NEW METHOD)
+    /**
+     * Upload image bytes to Firebase Storage
+     * Returns the download URL
+     */
     suspend fun uploadImageBytes(byteArray: ByteArray): Result<String> {
         return try {
             withTimeout(TIMEOUT_MS) {
                 val fileName = "recipe_images/${UUID.randomUUID()}.jpg"
                 val ref = storage.reference.child(fileName)
 
-                Log.d(TAG, "=== FIREBASE UPLOAD START ===")
+                Log.d(TAG, "=== FIREBASE STORAGE UPLOAD START ===")
                 Log.d(TAG, "Uploading byte array, size: ${byteArray.size / 1024}KB")
                 Log.d(TAG, "Target path: $fileName")
 
-                // Upload byte array
-                Log.d(TAG, "Starting putBytes...")
+                // Upload byte array to Firebase Storage
                 val uploadTask = ref.putBytes(byteArray).await()
-                Log.d(TAG, "putBytes completed, bytes transferred: ${uploadTask.bytesTransferred}")
+                Log.d(TAG, "Upload completed, bytes transferred: ${uploadTask.bytesTransferred}")
 
-                // Get download URL
-                Log.d(TAG, "Getting download URL...")
-                val url = ref.downloadUrl.await().toString()
+                // Get download URL from Firebase Storage
+                val downloadUrl = ref.downloadUrl.await().toString()
 
-                Log.d(TAG, "=== FIREBASE UPLOAD SUCCESS ===")
-                Log.d(TAG, "Download URL: $url")
+                Log.d(TAG, "=== FIREBASE STORAGE UPLOAD SUCCESS ===")
+                Log.d(TAG, "Download URL: $downloadUrl")
 
-                Result.success(url)
+                Result.success(downloadUrl)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "=== FIREBASE UPLOAD FAILED ===")
+            Log.e(TAG, "=== FIREBASE STORAGE UPLOAD FAILED ===")
             Log.e(TAG, "Error type: ${e.javaClass.simpleName}")
             Log.e(TAG, "Error message: ${e.message}")
             e.printStackTrace()
@@ -255,36 +253,57 @@ class FirebaseHelper {
         }
     }
 
-    // Image upload with URI (KEPT FOR COMPATIBILITY)
+    /**
+     * Delete image from Firebase Storage using URL
+     */
+    suspend fun deleteImageFromUrl(imageUrl: String): Result<Unit> {
+        return try {
+            if (imageUrl.isEmpty() || !imageUrl.contains("firebase")) {
+                return Result.success(Unit)
+            }
+
+            withTimeout(TIMEOUT_MS) {
+                Log.d(TAG, "Deleting image from Firebase Storage: $imageUrl")
+
+                val ref = storage.getReferenceFromUrl(imageUrl)
+                ref.delete().await()
+
+                Log.d(TAG, "Image deleted successfully from Firebase Storage")
+                Result.success(Unit)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to delete image from Firebase Storage: ${e.message}", e)
+            // Don't fail the whole operation if image deletion fails
+            Result.success(Unit)
+        }
+    }
+
+    /**
+     * Upload image from URI to Firebase Storage (kept for compatibility)
+     */
     suspend fun uploadImage(uri: Uri): Result<String> {
         return try {
             withTimeout(TIMEOUT_MS) {
                 val fileName = "recipe_images/${UUID.randomUUID()}.jpg"
                 val ref = storage.reference.child(fileName)
 
-                Log.d(TAG, "=== FIREBASE UPLOAD START ===")
+                Log.d(TAG, "=== FIREBASE STORAGE UPLOAD START ===")
                 Log.d(TAG, "Input URI: $uri")
-                Log.d(TAG, "URI scheme: ${uri.scheme}")
                 Log.d(TAG, "Target path: $fileName")
 
-                // Upload file
-                Log.d(TAG, "Starting putFile...")
                 val uploadTask = ref.putFile(uri).await()
-                Log.d(TAG, "putFile completed, bytes transferred: ${uploadTask.bytesTransferred}")
+                Log.d(TAG, "Upload completed, bytes transferred: ${uploadTask.bytesTransferred}")
 
-                // Get download URL
-                Log.d(TAG, "Getting download URL...")
-                val url = ref.downloadUrl.await().toString()
+                val downloadUrl = ref.downloadUrl.await().toString()
 
-                Log.d(TAG, "=== FIREBASE UPLOAD SUCCESS ===")
-                Log.d(TAG, "Download URL: $url")
+                Log.d(TAG, "=== FIREBASE STORAGE UPLOAD SUCCESS ===")
+                Log.d(TAG, "Download URL: $downloadUrl")
 
-                Result.success(url)
+                Result.success(downloadUrl)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "=== FIREBASE UPLOAD FAILED ===")
-            Log.e(TAG, "Error type: ${e.javaClass.simpleName}")
-            Log.e(TAG, "Error message: ${e.message}")
+            Log.e(TAG, "=== FIREBASE STORAGE UPLOAD FAILED ===")
+            Log.e(TAG, "Error: ${e.message}")
             e.printStackTrace()
             Result.failure(Exception("Failed to upload image: ${e.message}"))
         }

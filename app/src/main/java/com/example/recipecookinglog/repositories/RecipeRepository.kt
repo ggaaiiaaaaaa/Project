@@ -12,12 +12,12 @@ import com.example.recipecookinglog.utils.RecipeDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import java.io.File
 
 class RecipeRepository(private val context: Context) {
 
     private val firebaseHelper = FirebaseHelper()
     private val recipeDao = RecipeDatabase.getDatabase(context).recipeDao()
+    private val TAG = "RecipeRepository"
 
     // Get all recipes from Room (local)
     fun getAllRecipesLocal(): LiveData<List<Recipe>> {
@@ -36,6 +36,7 @@ class RecipeRepository(private val context: Context) {
                     recipe.isSynced = true
                     recipeDao.insertRecipe(recipe)
                 }
+                Log.d(TAG, "Synced ${recipes.size} recipes from Firebase")
             }
             result
         }
@@ -45,52 +46,61 @@ class RecipeRepository(private val context: Context) {
     suspend fun addRecipe(recipe: Recipe, imageUri: Uri?): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
-                // Handle image upload if provided
-                if (imageUri != null) {
-                    Log.d("RecipeRepository", "Starting image upload for URI: $imageUri")
+                Log.d(TAG, "=== ADD RECIPE START ===")
 
-                    // Convert to byte array instead of file
-                    val byteArray = compressImageToByteArray(imageUri)
+                // Handle image upload to Firebase Storage if provided
+                if (imageUri != null) {
+                    Log.d(TAG, "Image URI provided: $imageUri")
+                    Log.d(TAG, "URI scheme: ${imageUri.scheme}")
+
+                    // Read and compress image from URI
+                    val byteArray = readAndCompressImage(imageUri)
 
                     if (byteArray != null) {
-                        Log.d("RecipeRepository", "Image compressed successfully: ${byteArray.size / 1024}KB")
+                        Log.d(TAG, "Image compressed: ${byteArray.size / 1024}KB")
 
-                        // Upload byte array to Firebase Storage
-                        val imageResult = firebaseHelper.uploadImageBytes(byteArray)
+                        // Upload to Firebase Storage
+                        val uploadResult = firebaseHelper.uploadImageBytes(byteArray)
 
-                        if (imageResult.isSuccess) {
-                            val downloadUrl = imageResult.getOrNull()
-                            recipe.imageUrl = downloadUrl ?: ""
-                            Log.d("RecipeRepository", "Image uploaded successfully: ${recipe.imageUrl}")
+                        if (uploadResult.isSuccess) {
+                            val firebaseUrl = uploadResult.getOrNull()
+                            recipe.imageUrl = firebaseUrl ?: ""
+                            Log.d(TAG, "✓ Image uploaded to Firebase Storage")
+                            Log.d(TAG, "✓ Firebase Storage URL: ${recipe.imageUrl}")
                         } else {
-                            Log.e("RecipeRepository", "Image upload failed: ${imageResult.exceptionOrNull()?.message}")
+                            Log.e(TAG, "✗ Image upload failed: ${uploadResult.exceptionOrNull()?.message}")
                             recipe.imageUrl = ""
                         }
                     } else {
-                        Log.e("RecipeRepository", "Image compression failed")
+                        Log.e(TAG, "✗ Failed to compress image")
                         recipe.imageUrl = ""
                     }
                 } else {
-                    Log.d("RecipeRepository", "No image selected")
+                    Log.d(TAG, "No image provided")
                     recipe.imageUrl = ""
                 }
 
-                // Add to Firebase Firestore
+                // Add recipe to Firestore
+                Log.d(TAG, "Saving recipe to Firestore...")
                 val result = firebaseHelper.addRecipe(recipe)
 
                 if (result.isSuccess) {
                     // Save to local database
                     recipe.isSynced = true
                     recipeDao.insertRecipe(recipe)
-                    Log.d("RecipeRepository", "Recipe saved successfully with image URL: ${recipe.imageUrl}")
+                    Log.d(TAG, "=== ADD RECIPE SUCCESS ===")
+                    Log.d(TAG, "Recipe ID: ${recipe.id}")
+                    Log.d(TAG, "Image URL in Firestore: ${recipe.imageUrl}")
                 } else {
-                    Log.e("RecipeRepository", "Failed to save recipe to Firestore: ${result.exceptionOrNull()?.message}")
+                    Log.e(TAG, "=== ADD RECIPE FAILED ===")
+                    Log.e(TAG, "Error: ${result.exceptionOrNull()?.message}")
                 }
 
                 result
 
             } catch (e: Exception) {
-                Log.e("RecipeRepository", "Error adding recipe: ${e.message}", e)
+                Log.e(TAG, "=== ADD RECIPE EXCEPTION ===")
+                Log.e(TAG, "Error: ${e.message}", e)
                 Result.failure(e)
             }
         }
@@ -100,37 +110,61 @@ class RecipeRepository(private val context: Context) {
     suspend fun updateRecipe(recipe: Recipe, imageUri: Uri?): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
+                Log.d(TAG, "=== UPDATE RECIPE START ===")
+                Log.d(TAG, "Recipe ID: ${recipe.id}")
+                Log.d(TAG, "Current image URL: ${recipe.imageUrl}")
+
                 // Handle new image upload if provided
                 if (imageUri != null) {
-                    Log.d("RecipeRepository", "Updating image for URI: $imageUri")
+                    Log.d(TAG, "New image URI provided: $imageUri")
 
-                    val byteArray = compressImageToByteArray(imageUri)
+                    // Read and compress image
+                    val byteArray = readAndCompressImage(imageUri)
 
                     if (byteArray != null) {
-                        val imageResult = firebaseHelper.uploadImageBytes(byteArray)
+                        Log.d(TAG, "New image compressed: ${byteArray.size / 1024}KB")
 
-                        if (imageResult.isSuccess) {
-                            recipe.imageUrl = imageResult.getOrNull() ?: recipe.imageUrl
-                            Log.d("RecipeRepository", "Image updated successfully: ${recipe.imageUrl}")
+                        // Upload new image to Firebase Storage
+                        val uploadResult = firebaseHelper.uploadImageBytes(byteArray)
+
+                        if (uploadResult.isSuccess) {
+                            val oldImageUrl = recipe.imageUrl
+                            val newImageUrl = uploadResult.getOrNull() ?: ""
+
+                            // Delete old image from Firebase Storage
+                            if (oldImageUrl.isNotEmpty() && oldImageUrl.contains("firebasestorage")) {
+                                Log.d(TAG, "Deleting old image from Firebase Storage")
+                                firebaseHelper.deleteImageFromUrl(oldImageUrl)
+                            }
+
+                            recipe.imageUrl = newImageUrl
+                            Log.d(TAG, "✓ New image uploaded to Firebase Storage")
+                            Log.d(TAG, "✓ New Firebase Storage URL: ${recipe.imageUrl}")
                         } else {
-                            Log.e("RecipeRepository", "Image update failed: ${imageResult.exceptionOrNull()?.message}")
+                            Log.e(TAG, "✗ New image upload failed: ${uploadResult.exceptionOrNull()?.message}")
                         }
+                    } else {
+                        Log.e(TAG, "✗ Failed to compress new image")
                     }
+                } else {
+                    Log.d(TAG, "No new image provided, keeping existing image URL")
                 }
 
-                // Update in Firebase
+                // Update in Firestore
+                Log.d(TAG, "Updating recipe in Firestore...")
                 val result = firebaseHelper.updateRecipe(recipe)
 
                 if (result.isSuccess) {
                     recipe.isSynced = true
                     recipeDao.updateRecipe(recipe)
-                    Log.d("RecipeRepository", "Recipe updated successfully")
+                    Log.d(TAG, "=== UPDATE RECIPE SUCCESS ===")
                 }
 
                 result
 
             } catch (e: Exception) {
-                Log.e("RecipeRepository", "Error updating recipe: ${e.message}", e)
+                Log.e(TAG, "=== UPDATE RECIPE EXCEPTION ===")
+                Log.e(TAG, "Error: ${e.message}", e)
                 Result.failure(e)
             }
         }
@@ -139,11 +173,28 @@ class RecipeRepository(private val context: Context) {
     // Delete recipe
     suspend fun deleteRecipe(recipe: Recipe): Result<Unit> {
         return withContext(Dispatchers.IO) {
-            val result = firebaseHelper.deleteRecipe(recipe.id)
-            if (result.isSuccess) {
-                recipeDao.deleteRecipe(recipe)
+            try {
+                Log.d(TAG, "=== DELETE RECIPE START ===")
+                Log.d(TAG, "Recipe ID: ${recipe.id}")
+
+                // Delete image from Firebase Storage if exists
+                if (recipe.imageUrl.isNotEmpty() && recipe.imageUrl.contains("firebasestorage")) {
+                    Log.d(TAG, "Deleting image from Firebase Storage")
+                    firebaseHelper.deleteImageFromUrl(recipe.imageUrl)
+                }
+
+                // Delete from Firestore
+                val result = firebaseHelper.deleteRecipe(recipe.id)
+                if (result.isSuccess) {
+                    recipeDao.deleteRecipe(recipe)
+                    Log.d(TAG, "=== DELETE RECIPE SUCCESS ===")
+                }
+                result
+            } catch (e: Exception) {
+                Log.e(TAG, "=== DELETE RECIPE EXCEPTION ===")
+                Log.e(TAG, "Error: ${e.message}", e)
+                Result.failure(e)
             }
-            result
         }
     }
 
@@ -155,54 +206,65 @@ class RecipeRepository(private val context: Context) {
     }
 
     /**
-     * Compress image to byte array
-     * Returns the byte array if successful, null otherwise
+     * Read image from URI and compress to byte array
+     * This works for both content:// URIs (from gallery) and file:// URIs
      */
-    private fun compressImageToByteArray(uri: Uri): ByteArray? {
+    private fun readAndCompressImage(uri: Uri): ByteArray? {
         try {
-            Log.d("RecipeRepository", "Compressing image from URI: $uri")
+            Log.d(TAG, "Reading image from URI: $uri")
+            Log.d(TAG, "URI scheme: ${uri.scheme}")
 
-            // Read the image from URI
+            // Open input stream from content resolver
             val inputStream = context.contentResolver.openInputStream(uri)
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-            inputStream?.close()
-
-            if (bitmap == null) {
-                Log.e("RecipeRepository", "Failed to decode bitmap from URI")
+            if (inputStream == null) {
+                Log.e(TAG, "Failed to open input stream for URI")
                 return null
             }
 
-            Log.d("RecipeRepository", "Original bitmap size: ${bitmap.width}x${bitmap.height}")
+            // Decode bitmap from stream
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream.close()
 
-            // Calculate new dimensions (max 1024x1024)
+            if (bitmap == null) {
+                Log.e(TAG, "Failed to decode bitmap from stream")
+                return null
+            }
+
+            Log.d(TAG, "Original image size: ${bitmap.width}x${bitmap.height}")
+
+            // Calculate scaling to max 1024x1024
             val maxSize = 1024
-            val ratio = minOf(
+            val scale = minOf(
                 maxSize.toFloat() / bitmap.width,
-                maxSize.toFloat() / bitmap.height
+                maxSize.toFloat() / bitmap.height,
+                1.0f // Don't upscale
             )
 
-            val newWidth = (ratio * bitmap.width).toInt()
-            val newHeight = (ratio * bitmap.height).toInt()
+            val newWidth = (bitmap.width * scale).toInt()
+            val newHeight = (bitmap.height * scale).toInt()
 
-            Log.d("RecipeRepository", "Resizing to: ${newWidth}x${newHeight}")
+            Log.d(TAG, "Resizing to: ${newWidth}x${newHeight}")
 
-            val resizedBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+            // Create scaled bitmap
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
 
-            // Compress to JPEG with 80% quality
+            // Compress to JPEG
             val outputStream = ByteArrayOutputStream()
-            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
             val byteArray = outputStream.toByteArray()
 
-            Log.d("RecipeRepository", "Compressed size: ${byteArray.size / 1024}KB")
+            Log.d(TAG, "Compressed to: ${byteArray.size / 1024}KB")
 
-            // Clean up bitmaps
+            // Clean up
             bitmap.recycle()
-            resizedBitmap.recycle()
+            if (scaledBitmap != bitmap) {
+                scaledBitmap.recycle()
+            }
 
             return byteArray
 
         } catch (e: Exception) {
-            Log.e("RecipeRepository", "Error compressing image: ${e.message}", e)
+            Log.e(TAG, "Error reading/compressing image: ${e.message}", e)
             return null
         }
     }

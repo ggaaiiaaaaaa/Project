@@ -1,6 +1,5 @@
 package com.example.recipecookinglog.activities
 
-import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.MenuItem
@@ -25,52 +24,25 @@ class AddEditRecipeActivity : AppCompatActivity() {
     private var currentRecipe: Recipe? = null
     private var isEditMode = false
 
-    // Use GetContent for simpler, more reliable image picking
+    // Simple image picker - DON'T copy to internal storage
     private val imagePickerLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { originalUri ->
-            android.util.Log.d("AddEditRecipe", "Image selected: $originalUri")
-            
-            // Copy the image to app's internal storage to ensure reliable access
-            try {
-                val copiedUri = copyImageToInternalStorage(originalUri)
-                if (copiedUri != null) {
-                    selectedImageUri = copiedUri
-                    android.util.Log.d("AddEditRecipe", "Image copied to: $copiedUri")
-                } else {
-                    selectedImageUri = originalUri
-                    android.util.Log.d("AddEditRecipe", "Using original URI: $originalUri")
-                }
-                
-                Glide.with(this)
-                    .load(selectedImageUri)
-                    .centerCrop()
-                    .into(binding.ivRecipeImage)
-                binding.btnSelectImage.text = "Change Image"
-            } catch (e: Exception) {
-                android.util.Log.e("AddEditRecipe", "Error handling image: ${e.message}", e)
-                Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-    
-    private fun copyImageToInternalStorage(sourceUri: Uri): Uri? {
-        return try {
-            val inputStream = contentResolver.openInputStream(sourceUri) ?: return null
-            val fileName = "recipe_image_${System.currentTimeMillis()}.jpg"
-            val outputFile = java.io.File(filesDir, fileName)
-            
-            inputStream.use { input ->
-                java.io.FileOutputStream(outputFile).use { output ->
-                    input.copyTo(output)
-                }
-            }
-            
-            android.net.Uri.fromFile(outputFile)
-        } catch (e: Exception) {
-            android.util.Log.e("AddEditRecipe", "Failed to copy image: ${e.message}", e)
-            null
+        uri?.let {
+            android.util.Log.d("AddEditRecipe", "Image selected from gallery: $uri")
+
+            // Store the URI directly - don't copy to internal storage
+            selectedImageUri = uri
+
+            // Display the selected image preview
+            Glide.with(this)
+                .load(uri)
+                .centerCrop()
+                .placeholder(R.drawable.ic_recipe_placeholder)
+                .error(R.drawable.ic_recipe_placeholder)
+                .into(binding.ivRecipeImage)
+
+            binding.btnSelectImage.text = "Change Image"
         }
     }
 
@@ -120,11 +92,12 @@ class AddEditRecipeActivity : AppCompatActivity() {
         recipeViewModel.loading.observe(this) { isLoading ->
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
             binding.btnSave.isEnabled = !isLoading
+            binding.btnSelectImage.isEnabled = !isLoading
         }
 
         recipeViewModel.error.observe(this) { error ->
             error?.let {
-                Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, it, Toast.LENGTH_LONG).show()
                 recipeViewModel.clearMessages()
             }
         }
@@ -140,7 +113,7 @@ class AddEditRecipeActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         binding.btnSelectImage.setOnClickListener {
-            // GetContent launcher only needs the MIME type
+            // Launch image picker
             imagePickerLauncher.launch("image/*")
         }
 
@@ -167,10 +140,14 @@ class AddEditRecipeActivity : AppCompatActivity() {
                 spinnerMealType.setSelection(mealTypePosition)
             }
 
+            // Load existing image from Firebase Storage URL
             if (recipe.imageUrl.isNotEmpty()) {
+                android.util.Log.d("AddEditRecipe", "Loading existing image from Firebase: ${recipe.imageUrl}")
                 Glide.with(this@AddEditRecipeActivity)
                     .load(recipe.imageUrl)
                     .centerCrop()
+                    .placeholder(R.drawable.ic_recipe_placeholder)
+                    .error(R.drawable.ic_recipe_placeholder)
                     .into(ivRecipeImage)
                 btnSelectImage.text = "Change Image"
             }
@@ -199,6 +176,8 @@ class AddEditRecipeActivity : AppCompatActivity() {
                     this.cuisine = cuisine
                     this.mealType = mealType
                 }
+                // Pass the URI - repository will upload to Firebase Storage
+                android.util.Log.d("AddEditRecipe", "Updating recipe with new image URI: $selectedImageUri")
                 recipeViewModel.updateRecipe(currentRecipe!!, selectedImageUri)
             } else {
                 val newRecipe = Recipe(
@@ -209,12 +188,20 @@ class AddEditRecipeActivity : AppCompatActivity() {
                     cuisine = cuisine,
                     mealType = mealType
                 )
+                // Pass the URI - repository will upload to Firebase Storage
+                android.util.Log.d("AddEditRecipe", "Adding new recipe with image URI: $selectedImageUri")
                 recipeViewModel.addRecipe(newRecipe, selectedImageUri)
             }
         }
     }
 
     private fun validateInput(name: String, ingredients: String, steps: String): Boolean {
+        binding.apply {
+            tilRecipeName.error = null
+            tilIngredients.error = null
+            tilSteps.error = null
+        }
+
         if (name.isEmpty()) {
             binding.tilRecipeName.error = "Recipe name is required"
             return false
